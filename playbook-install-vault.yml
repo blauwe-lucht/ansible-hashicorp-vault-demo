@@ -9,11 +9,14 @@
     vault_user: vault
     unseal_keys_dir_output: /root/unsealKey
     root_token_dir_output: /root/rootKey
+    vault_addr: "http://{{ ansible_host }}:8200"
+    kv_mount_path: secret
   tasks:
     - name: Install required packages
       ansible.builtin.apt:
         name:
           - unzip
+          - python3-hvac  # Needed for module vault_write
         state: present
 
     - name: Creating vault user group
@@ -216,12 +219,77 @@
       ansible.builtin.slurp:
         src: "{{ root_token_dir_output }}/rootkey"
       register: slurp_result
+      tags: always
+
+    - name: Set vault token
+      ansible.builtin.set_fact:
+        vault_token: "{{ slurp_result.content | b64decode }}"
+      tags: always
 
     - name: Show further steps
       ansible.builtin.debug:
         msg: |
-          You can now point your browser at http://{{ ansible_host }}:8200.
-          When asked for a token, supply {{ slurp_result.content | b64decode }}
+          You can now point your browser at {{ vault_addr }}.
+          When asked for a token, supply {{ vault_token }}
+
+    - name: Enable engine {{ engine.full_name }}
+      ansible.builtin.include_tasks: tasks/loop_enable_secrets_engine.yml
+      loop:
+        - full_name: kv-v2
+          name: kv
+          root: secret
+        - full_name: transit
+          name: transit
+          root: transit
+      loop_control:
+        loop_var: engine
+        label: "{{ engine.full_name }}"
+      tags: secrets-engines
+
+    - name: Check existance of secret
+      community.hashi_vault.vault_kv2_get:
+        url: "{{ vault_addr }}"
+        token: "{{ vault_token }}"
+        path: "secret/db_password"
+      ignore_errors: true
+      register: vault_get_result
+      tags: generate
+
+    - name: Generate a random value
+      community.hashi_vault.vault_write:
+        url: "{{ vault_addr }}"
+        token: "{{ vault_token }}"
+        path: "transit/random/32"
+      register: random_value
+      when: vault_get_result.failed
+      tags: generate
+
+    - name: Fill secret with random value
+      community.hashi_vault.vault_kv2_write:
+        url: "{{ vault_addr }}"
+        token: "{{ vault_token }}"
+        path: "secret/db_password"
+        data:
+          db_password: "{{ random_value.data.data.random_bytes }}"
+      when: vault_get_result.failed
+      tags: generate
+
+    - name: Read secret
+      community.hashi_vault.vault_kv2_get:
+        url: "{{ vault_addr }}"
+        token: "{{ vault_token }}"
+        path: "secret/db_password"
+      register: vault_get_result
+      tags: use-secret
+
+    - name: Set var to secret
+      ansible.builtin.set_fact:
+        db_password: "{{ vault_get_result.secret.db_password }}"
+      tags: use-secret
+
+    - name: Display secret
+      ansible.builtin.debug:
+        msg: "db_password = {{ db_password }}"
 
   handlers:
     - name: Reload vault
