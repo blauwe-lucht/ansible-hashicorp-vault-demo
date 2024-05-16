@@ -1,0 +1,40 @@
+{
+    "terminal.integrated.profiles.linux": {
+        "acs": {
+            "path": "bash",
+            "args": ["-c", "vagrant ssh acs"],
+            "icon": "terminal-bash",
+            "overrideName": true
+        },
+        "vault": {
+            "path": "bash",
+            "args": ["-c", "vagrant ssh vault"],
+            "icon": "terminal-bash",
+            "overrideName": true
+        },
+        // Remove unneeded terminals:
+        "Azure Cloud Shell (Bash)": null,
+        "Azure Cloud Shell (PowerShell)": null,
+        "JavaScript Debug Terminal": null,
+        "tmux": null
+    },
+    "terminal.integrated.profiles.windows": {
+        "acs": {
+            "path": "powershell",
+            "args": ["-NoLogo", "-Command", "vagrant ssh acs"],
+            "icon": "terminal-powershell",
+            "overrideName": true
+        },
+        "vault": {
+            "path": "powershell",
+            "args": ["-NoLogo", "-Command", "vagrant ssh vault"],
+            "icon": "terminal-powershell",
+            "overrideName": true
+        },
+        // Remove unneeded terminals:
+        "Azure Cloud Shell (Bash)": null,
+        "Azure Cloud Shell (PowerShell)": null,
+        "JavaScript Debug Terminal": null,
+        "tmux": null
+    },
+}
