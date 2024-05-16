@@ -226,12 +226,6 @@
         vault_token: "{{ slurp_result.content | b64decode }}"
       tags: always
 
-    - name: Show further steps
-      ansible.builtin.debug:
-        msg: |
-          You can now point your browser at {{ vault_addr }}.
-          When asked for a token, supply {{ vault_token }}
-
     - name: Enable engine {{ engine.full_name }}
       ansible.builtin.include_tasks: tasks/loop_enable_secrets_engine.yml
       loop:
@@ -381,6 +375,12 @@
       ansible.builtin.debug:
         msg: The RoleID is {{ role_id }}, SecretID is {{ secret_id }}
       tags: approle
+
+    - name: Show further steps
+      ansible.builtin.debug:
+        msg: |
+          You can now point your browser at {{ vault_addr }}.
+          When asked for a token, supply {{ vault_token }}.
 
   handlers:
     - name: Reload vault
