@@ -1,4 +1,4 @@
-# Ansible Hashicorp Vault PoC
+# Ansible Hashicorp Vault Demo
 
 ## Prerequisites
 
@@ -13,3 +13,4 @@ vagrant ssh acs
 ansible-playbook playbook-install-vault.yml
 ```
 
+When using vscode you can use the provided terminal profiles to quickly open an SSH session to the acs VM or the vault VM.
