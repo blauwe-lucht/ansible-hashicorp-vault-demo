@@ -38,5 +38,6 @@ Vagrant.configure(2) do |config|
         vault.vm.box = "bento/ubuntu-22.04"
         vault.vm.hostname = "vault"
         vault.vm.network "private_network", ip: "192.168.14.9"
+        # Configuration will be done by Ansible from the acs.
     end
 end
