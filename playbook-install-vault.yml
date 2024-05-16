@@ -212,6 +212,17 @@
           - vault_status_result.stdout is regex('Initialized\s+true')
           - vault_status_result.stdout is regex('Sealed\s+false')
 
+    - name: Retrieve root token
+      ansible.builtin.slurp:
+        src: "{{ root_token_dir_output }}/rootkey"
+      register: slurp_result
+
+    - name: Show further steps
+      ansible.builtin.debug:
+        msg: |
+          You can now point your browser at http://{{ ansible_host }}:8200.
+          When asked for a token, supply {{ slurp_result.content | b64decode }}
+
   handlers:
     - name: Reload vault
       ansible.builtin.service:
