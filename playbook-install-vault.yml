@@ -351,7 +351,7 @@
 
     - name: Retrieve approle RoleID
       ansible.builtin.command:
-        cmd: vault read auth/approle/role/read_secret_approle/role-id -format=json
+        cmd: vault read -format=json auth/approle/role/read_secret_approle/role-id
       environment:
         VAULT_TOKEN: "{{ vault_token }}"
       changed_when: false
@@ -363,9 +363,23 @@
         role_id: "{{ (vault_read_role_id_result.stdout | from_json).data.role_id }}"
       tags: approle
 
-    - name: Show the RoleID
+    - name: Retrieve approle SecretID
+      ansible.builtin.command:
+        cmd: vault write -force -format=json auth/approle/role/read_secret_approle/secret-id
+      environment:
+        VAULT_TOKEN: "{{ vault_token }}"
+      changed_when: false
+      register: vault_read_secret_id_result
+      tags: approle
+
+    - name: Set secret_id variable
+      ansible.builtin.set_fact:
+        secret_id: "{{ (vault_read_secret_id_result.stdout | from_json).data.secret_id }}"
+      tags: approle
+
+    - name: Show RoleID and SecretID
       ansible.builtin.debug:
-        msg: The RoleID is {{ role_id }}
+        msg: The RoleID is {{ role_id }}, SecretID is {{ secret_id }}
       tags: approle
 
   handlers:
