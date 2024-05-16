@@ -323,6 +323,7 @@
         VAULT_TOKEN: "{{ vault_token }}"
       changed_when: true
       when: copy_result.changed
+      tags: approle
 
     - name: Check current approle RoleID
       ansible.builtin.command:
