@@ -111,7 +111,7 @@
 
     - name: Assert vault status
       ansible.builtin.assert:
-        # Until vault is initialized and unsealed, vault status will resturn exit code 2.
+        # Until vault is initialized and unsealed, vault status will return exit code 2.
         that: vault_status_result.rc == 2 or vault_status_result.rc == 0
 
     - name: Init vault
@@ -171,7 +171,7 @@
     - name: Assert vault status
       ansible.builtin.assert:
         that:
-          # Until vault is initialized and unsealed, vault status will resturn exit code 2.
+          # Until vault is initialized and unsealed, vault status will return exit code 2.
           - vault_status_result.rc == 2 or vault_status_result.rc == 0
           - vault_status_result.stdout is regex('Initialized\s+true')
 
