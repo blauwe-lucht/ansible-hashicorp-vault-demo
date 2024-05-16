@@ -291,6 +291,83 @@
       ansible.builtin.debug:
         msg: "db_password = {{ db_password }}"
 
+    - name: Retrieve current auth methods
+      ansible.builtin.command:
+        cmd: vault auth list
+      environment:
+        VAULT_TOKEN: "{{ vault_token }}"
+      changed_when: false
+      register: vault_auth_list_result
+      tags: approle
+
+    - name: Enable approle auth method
+      ansible.builtin.command:
+        cmd: vault auth enable approle
+      environment:
+        VAULT_TOKEN: "{{ vault_token }}"
+      changed_when: true
+      when: vault_auth_list_result.stdout is not regex('approle/\s+approle')
+      tags: approle
+
+    - name: Copy policy file
+      ansible.builtin.copy:
+        dest: /root/read-secret-policy.hcl
+        content: |
+          path "secret/*" {
+            capabilities = ["read", "list"]
+          }
+        owner: root
+        group: root
+        mode: "0644"
+      register: copy_result
+      tags: approle
+
+    - name: Apply policy
+      ansible.builtin.command:
+        cmd: vault policy write read_secret_policy /root/read-secret-policy.hcl
+      environment:
+        VAULT_TOKEN: "{{ vault_token }}"
+      changed_when: true
+      when: copy_result.changed
+
+    - name: Check current approle RoleID
+      ansible.builtin.command:
+        cmd: vault read auth/approle/role/read_secret_approle/role-id
+      environment:
+        VAULT_TOKEN: "{{ vault_token }}"
+      changed_when: false
+      ignore_errors: true
+      register: vault_read_role_id_result
+      tags: approle
+
+    - name: Create approle
+      ansible.builtin.command:
+        cmd: vault write auth/approle/role/read_secret_approle token_policies="read_secret_policy"
+      environment:
+        VAULT_TOKEN: "{{ vault_token }}"
+      changed_when: true
+      when: vault_read_role_id_result.failed
+      tags: approle
+
+    - name: Retrieve approle RoleID
+      ansible.builtin.command:
+        cmd: vault read auth/approle/role/read_secret_approle/role-id -format=json
+      environment:
+        VAULT_TOKEN: "{{ vault_token }}"
+      changed_when: false
+      register: vault_read_role_id_result
+      tags: approle
+
+    - name: Set role_id variable
+      ansible.builtin.set_fact:
+        role_id: "{{ (vault_read_role_id_result.stdout | from_json).data.role_id }}"
+      tags: approle
+
+    - name: Show the RoleID
+      ansible.builtin.debug:
+        msg: The RoleID is {{ role_id }}
+      tags: approle
+
   handlers:
     - name: Reload vault
       ansible.builtin.service:
