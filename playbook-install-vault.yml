@@ -376,6 +376,18 @@
         msg: The RoleID is {{ role_id }}, SecretID is {{ secret_id }}
       tags: approle
 
+    - name: Create vars for other playbooks
+      ansible.builtin.copy:
+        dest: /vagrant/host_vars/vault/generated.yml
+        content: |
+          ---
+          vault_role_id: {{ role_id }}
+          vault_secret_id: {{ secret_id }}
+        owner: vagrant
+        group: vagrant
+        mode: "0644"
+      tags: approle
+
     - name: Show further steps
       ansible.builtin.debug:
         msg: |
